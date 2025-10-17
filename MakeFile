@@ -1,0 +1,38 @@
+# Compiler and flags
+CXX = g++
+CXXFLAGS = -Wall -std=c++17 -MMD -MP
+
+# Paths
+INCLUDE_DIR = x86_64-w64-mingw32/include
+LIB_DIR     = x86_64-w64-mingw32/lib
+
+# Sources, objects, and output
+SRC = main.cpp player.cpp enemy.cpp bullet.cpp stats.cpp
+OBJ = $(SRC:.cpp=.o)
+DEP = $(OBJ:.o=.d)
+OUT = Skybound.exe
+
+# Libraries
+LIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
+
+# Default target
+all: $(OUT)
+
+# Build Skybound
+$(OUT): $(OBJ)
+	$(CXX) $(OBJ) -I$(INCLUDE_DIR) -L$(LIB_DIR) $(LIBS) -o $(OUT)
+
+# Compile .cpp → .o and generate .d dependency files
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
+
+# Include generated dependency files (handles header changes)
+-include $(DEP)
+
+# Optional: build level1
+level1: level1.cpp
+	$(CXX) level1.cpp -I$(INCLUDE_DIR) -L$(LIB_DIR) $(LIBS) -o level1.exe
+
+# Clean
+clean:
+	del $(OUT) $(OBJ) $(DEP) level1.exe
