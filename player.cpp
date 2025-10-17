@@ -11,7 +11,7 @@ Plane::Plane(int startX, int startY, int width, int height, int s, SDL_Renderer*
     // Load from assets folder
     SDL_Surface* surface = IMG_Load("assets/ship.png");
     if (!surface) {
-        std::cout << "❌ Failed to load plane sprite: " << IMG_GetError() << std::endl;
+        std::cout << "Failed to load plane sprite: " << IMG_GetError() << std::endl;
         return;
     }
 
@@ -20,9 +20,9 @@ Plane::Plane(int startX, int startY, int width, int height, int s, SDL_Renderer*
     SDL_FreeSurface(surface);
 
     if (!texture) {
-        std::cout << "❌ Failed to create texture: " << SDL_GetError() << std::endl;
+        std::cout << "Failed to create texture: " << SDL_GetError() << std::endl;
     } else {
-        std::cout << "✅ Plane texture loaded successfully!\n";
+        std::cout << "Plane texture loaded successfully!\n";
     }
 }
 
@@ -66,3 +66,4 @@ Plane::~Plane() {
     if (texture)
         SDL_DestroyTexture(texture);
 }
+
