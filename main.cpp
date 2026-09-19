@@ -1,4 +1,4 @@
-// g++ main.cpp player.cpp asteroid.cpp bullet.cpp stats.cpp screeneffects.cpp utils.cpp asteroid_manager.cpp -Ix86_64-w64-mingw32/include -Lx86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -o Skybound.exe
+// g++ main.cpp player.cpp asteroid.cpp bullet.cpp stats.cpp screeneffects.cpp utils.cpp asteroid_manager.cpp enemy.cpp -Ix86_64-w64-mingw32/include -Lx86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -o Skybound.exe
 
 #define SDL_MAIN_HANDLED
 #include <iostream>
@@ -13,6 +13,8 @@
 #include "stats.h"
 #include "screeneffects.h"
 #include "asteroid_manager.h"
+#include "enemy.h"
+#include <cstdlib>
 
 enum GameState {
     TITLE,
@@ -27,6 +29,74 @@ bool checkCollision(const SDL_Rect& a, const SDL_Rect& b) {
             a.x + a.w > b.x &&
             a.y < b.y + b.h &&
             a.y + a.h > b.y);
+}
+
+// Function that spawns enemy waves
+void spawnEnemyWave(
+    std::vector<Enemy>& enemies,
+    SDL_Renderer* renderer,
+    SDL_Texture* smallTexture,
+    SDL_Texture* mediumTexture,
+    SDL_Texture* largeTexture,
+    int wave
+) {
+    // Only spawn enemy ships every 3rd wave
+    if (wave % 3 != 0)
+        return;
+
+    // More enemies as the waves get higher
+    int enemyCount = 2 + (wave / 3);
+
+    for (int i = 0; i < enemyCount; i++) {
+
+        float x = SCREEN_WIDTH + 100 + (i * 150);
+        float y = 80 + rand() % (SCREEN_HEIGHT - 160);
+
+        EnemyType type;
+
+        if (wave >= 9 && i % 3 == 2)
+            type = EnemyType::LARGE;
+        else if (i % 2 == 0)
+            type = EnemyType::SMALL;
+        else
+            type = EnemyType::MEDIUM;
+
+        if (type == EnemyType::SMALL) {
+
+            enemies.emplace_back(
+                x, y,
+                40, 40,
+                -2, 0,
+                renderer,
+                smallTexture,
+                EnemyType::SMALL
+            );
+
+        }
+        else if (type == EnemyType::MEDIUM) {
+
+            enemies.emplace_back(
+                x, y,
+                60, 60,
+                -2, 0,
+                renderer,
+                mediumTexture,
+                EnemyType::MEDIUM
+            );
+
+        }
+        else {
+
+            enemies.emplace_back(
+                x, y,
+                90, 90,
+                -2, 0,
+                renderer,
+                largeTexture,
+                EnemyType::LARGE
+            );
+        }
+    }
 }
 
 int main() {
@@ -65,6 +135,20 @@ int main() {
         return 1;
     }
 
+    SDL_Texture* enemySmallTexture =
+        IMG_LoadTexture(renderer, "assets/enemy_small.png");
+
+    SDL_Texture* enemyMediumTexture =
+        IMG_LoadTexture(renderer, "assets/enemy_medium.png");
+
+    SDL_Texture* enemyLargeTexture =
+        IMG_LoadTexture(renderer, "assets/enemy_large.png");
+
+    if (!enemySmallTexture || !enemyMediumTexture || !enemyLargeTexture) {
+        printf("Failed to load enemy texture: %s\n", IMG_GetError());
+        return 1;
+    }
+
     // Load font
     TTF_Font* font = TTF_OpenFont("assets/yourfont.ttf", 12);
     if (!font) {
@@ -87,7 +171,12 @@ int main() {
     AsteroidManager asteroidManager(renderer);
     asteroidManager.startNextWave(gameStats);
 
+    // Declares enemies and bullets for player
     std::vector<Bullet> bullets;
+    std::vector<Bullet> enemyBullets;
+    std::vector<Enemy> enemies;
+
+    int previousWave = gameStats.getWaveNumber();
 
     int bgX = 0;
     const int scrollSpeed = 5;
@@ -256,6 +345,31 @@ if (state == TITLE) {
         // Update asteroids
         asteroidManager.update(gameStats);
         asteroidManager.render();
+
+        // Detects when the wave changes
+        if (gameStats.getWaveNumber() != previousWave)
+        {
+            previousWave = gameStats.getWaveNumber();
+
+            spawnEnemyWave(
+                enemies,
+                renderer,
+                enemySmallTexture,
+                enemyMediumTexture,
+                enemyLargeTexture,
+                gameStats.getWaveNumber()
+            );
+        }
+
+        // Updates/Renders the enemies
+        for (auto& enemy : enemies)
+        {
+            if(!enemy.isDead())
+            {
+                enemy.update();
+                enemy.render(renderer);
+            }
+        }
 
         // Plane-Asteroid collision check
         if (!paused) {

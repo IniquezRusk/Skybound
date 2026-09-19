@@ -11,7 +11,8 @@ Enemy::Enemy(
     float sX,
     float sY,
     SDL_Renderer* r,
-    SDL_Texture* tex
+    SDL_Texture* tex,
+    EnemyType enemyType
 )
     : x(startX),
       y(startY),
@@ -23,14 +24,34 @@ Enemy::Enemy(
       texture(tex),
       health(40),
       dead(false),
+      hitFlashTimer(0),
       baseY(startY),
       hoverTime(0.0f),
       hoverAmplitude(10.0f),
       hoverSpeed(2.0f),
       shootTimer(0.0f),
       shootCooldown(2.0f),
+      type(enemyType),
       hoverPhase(static_cast<float>(rand() % 628) / 100.0f)
 {
+    // Set stats based on enemy type
+    if (type == EnemyType::SMALL)
+    {
+        health = 35;
+        shootCooldown = 1.0f;
+    }
+    else if (type == EnemyType::MEDIUM)
+    {
+        health = 70;
+        shootCooldown = 2.0f;
+    }
+    else if (type == EnemyType::LARGE)
+    {
+        health = 120;
+        shootCooldown = 3.5f;
+    }
+
+    // Initialize collision/render rectangle
     rect = {
         static_cast<int>(x),
         static_cast<int>(y),
@@ -39,7 +60,9 @@ Enemy::Enemy(
     };
 }
 
-Enemy::~Enemy() {}
+Enemy::~Enemy()
+{
+}
 
 void Enemy::update()
 {
@@ -49,12 +72,12 @@ void Enemy::update()
     y = baseY +
         sin(hoverTime * hoverSpeed + hoverPhase) * hoverAmplitude;
 
-    // Shooting cooldown
+    // Update shooting cooldown
     if (shootTimer > 0.0f)
     {
         shootTimer -= 0.016f;
 
-        // Prevent the timer from going negative
+        // Prevent timer from going negative
         if (shootTimer < 0.0f)
         {
             shootTimer = 0.0f;
@@ -68,13 +91,40 @@ void Enemy::update()
 
 void Enemy::render(SDL_Renderer* renderer)
 {
+    // Don't render dead enemies
+    if (dead)
+        return;
+
+    // Flash red briefly when hit
+    bool flashing = (SDL_GetTicks() - hitFlashTimer < 120);
+
     if (texture)
     {
+        if (flashing)
+        {
+            SDL_SetTextureColorMod(texture, 255, 80, 80);
+        }
+        else
+        {
+            SDL_SetTextureColorMod(texture, 255, 255, 255);
+        }
+
         SDL_RenderCopy(renderer, texture, nullptr, &rect);
+
+        // Reset texture color after rendering
+        SDL_SetTextureColorMod(texture, 255, 255, 255);
     }
     else
     {
-        SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
+        if (flashing)
+        {
+            SDL_SetRenderDrawColor(renderer, 255, 80, 80, 255);
+        }
+        else
+        {
+            SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
+        }
+
         SDL_RenderFillRect(renderer, &rect);
     }
 }
@@ -82,6 +132,7 @@ void Enemy::render(SDL_Renderer* renderer)
 bool Enemy::takeHit(int damage)
 {
     health -= damage;
+    hitFlashTimer = SDL_GetTicks();
 
     if (health <= 0)
     {
