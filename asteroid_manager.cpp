@@ -85,3 +85,11 @@ AsteroidManager::~AsteroidManager() {
     if (asteroidTexture)
         SDL_DestroyTexture(asteroidTexture);
 }
+
+void AsteroidManager::reset() {
+    asteroids.clear();
+
+    currentWave = 0;
+    waveTimer = 0;
+    waitingForNextWave = false;
+}

@@ -19,7 +19,7 @@ class EnemyManager
         );
 
         void spawnWave(int wave);
-        void update();
+        void update(std::vector<Bullet>& enemyBullets);
         void render();
         bool allEnemiesDefeated();
         void checkBulletCollisions(
@@ -27,6 +27,7 @@ class EnemyManager
             stats& playerStats,
             ScreenEffects& effects
         );
+        void reset();
 
     private:
         SDL_Renderer* renderer;

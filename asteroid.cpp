@@ -3,7 +3,8 @@
 #include <cstdlib>
 
 Asteroid::Asteroid(float startX, float startY, int width, int height, float sX, float sY, SDL_Renderer* r, SDL_Texture* tex)
-    : x(startX), y(startY), w(width), h(height), speedX(sX), speedY(sY), renderer(r), texture(tex), health(40), dead(false)
+    : x(startX), y(startY), w(width), h(height), speedX(sX), speedY(sY),
+      renderer(r), texture(tex), health(40), dead(false), hitFlashTimer(0)
 {
     rect = { (int)x, (int)y, w, h };
 }
@@ -28,15 +29,34 @@ void Asteroid::update() {
 
 void Asteroid::render(SDL_Renderer* renderer) {
     if (texture) {
-        SDL_RenderCopy(renderer, texture, nullptr, &rect);
-    } else {
-    SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
-    SDL_RenderFillRect(renderer, &rect);
-    }
+        
+        bool flashing = (SDL_GetTicks() - hitFlashTimer < 120);
+
+        if (flashing) 
+            SDL_SetTextureColorMod(texture, 255, 80, 80);
+         else 
+            SDL_SetTextureColorMod(texture, 255, 255, 255);
+        
+            SDL_RenderCopy(renderer, texture, nullptr, &rect);
+
+            // Resets so everything else isn't afected
+            SDL_SetTextureColorMod(texture, 255, 255, 255);
+        } else {
+            bool flashing = (SDL_GetTicks() - hitFlashTimer < 120);
+
+            if (flashing)
+                SDL_SetRenderDrawColor(renderer, 255, 80, 80, 255);
+            else
+                SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
+
+            SDL_RenderFillRect(renderer, &rect);
+        }
 }
 
 bool Asteroid::takeHit(int damage) {
     health -= damage;
+    hitFlashTimer = SDL_GetTicks();
+
     if (health <= 0) {
         dead = true;
         return true;

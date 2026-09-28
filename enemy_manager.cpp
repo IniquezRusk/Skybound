@@ -98,7 +98,7 @@ void EnemyManager::spawnEnemy(float x, float y, EnemyType type)
         case EnemyType::SMALL:
             enemies.emplace_back(
                 x, y,
-                40, 40,
+                80, 80,
                 0, 0,
                 renderer,
                 smallTexture,
@@ -109,7 +109,7 @@ void EnemyManager::spawnEnemy(float x, float y, EnemyType type)
         case EnemyType::MEDIUM:
             enemies.emplace_back(
                 x, y,
-                60, 60,
+                100, 100,
                 0, 0,
                 renderer,
                 mediumTexture,
@@ -120,7 +120,7 @@ void EnemyManager::spawnEnemy(float x, float y, EnemyType type)
         case EnemyType::LARGE:
             enemies.emplace_back(
                 x, y,
-                90, 90,
+                120, 120,
                 0, 0,
                 renderer,
                 largeTexture,
@@ -130,13 +130,18 @@ void EnemyManager::spawnEnemy(float x, float y, EnemyType type)
     }
 }
 
-void EnemyManager::update()
+void EnemyManager::update(std::vector<Bullet>& enemyBullets)
 {
     for (auto& enemy : enemies)
     {
         if (!enemy.isDead())
         {
             enemy.update();
+
+            if (enemy.canShoot())
+            {
+                enemy.shoot(enemyBullets);
+            }
         }
     }
 }
@@ -200,4 +205,8 @@ void EnemyManager::checkBulletCollisions(std::vector<Bullet>& bullets, stats& pl
             i++;
         }
     }
+}
+
+void EnemyManager::reset() {
+    enemies.clear();
 }

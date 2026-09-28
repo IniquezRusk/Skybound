@@ -7,6 +7,7 @@
 class Asteroid {
 private:
     int health;
+    Uint32 hitFlashTimer;
 
 public:
    float x,y;

@@ -30,6 +30,7 @@ public:
     void render();
 
     bool allAsteroidsDestroyed();
+    void reset();
 };
 
 #endif

@@ -85,6 +85,7 @@ int main() {
     // Stats and setup
     stats gameStats;
     ScreenEffects effects;
+
     gameStats.setLives(3);
     gameStats.setScore(0);
     gameStats.setHighScore(0);
@@ -140,17 +141,19 @@ int main() {
             // If any key is pressed on GAME OVER, return to title
             if (state == GAME_OVER && e.type == SDL_KEYDOWN) {
                 if (e.key.keysym.scancode == SDL_SCANCODE_RETURN) {
-                // reset stats
+
+                // Reset stats
                 gameStats.setLives(3);
                 gameStats.setScore(0);
                 gameStats.setWaveNumber(1);
                 gameStats.setMultiplier(1);
                 gameStats.setTimer(0);
-                Uint32 startTime = 0;
 
                 // resets world
                 bullets.clear();
-                asteroidManager.asteroids.clear();
+                enemyBullets.clear();
+                asteroidManager.reset();
+                enemyManager.reset();
                 effects = ScreenEffects();
 
                 // Resets player position
@@ -159,7 +162,16 @@ int main() {
                 plane.rect.x = (int)plane.x;
                 plane.rect.y = (int)plane.y;
 
-            state = TITLE;
+                // Reset wave tracking
+                previousWave = 1;
+
+                // Reset game timer
+                startTime = 0;
+
+                // Start fresh Wave 1
+                asteroidManager.startNextWave(gameStats);
+
+                state = TITLE;
             }
         }
      } // End of SDL_PollEvent
@@ -280,7 +292,7 @@ if (state == TITLE) {
         asteroidManager.render();
 
         // Update enemies
-        enemyManager.update();
+        enemyManager.update(enemyBullets);
         enemyManager.render();
 
         if (gameStats.getWaveNumber() != previousWave)
@@ -339,38 +351,93 @@ if (state == TITLE) {
             lastFireTime = currentTime;
         }
 
-
-        // Update and render bullets
+        // Update and render player bullets
         for (int i = 0; i < bullets.size();) {
             bullets[i].update();
             bullets[i].render(renderer);
 
             bool bulletRemoved = false;
 
+            // Player bullet hits asteroid
             for (auto& a : asteroidManager.asteroids) {
                 if (!a.isDead() && checkCollision(bullets[i].rect, a.rect)) {
                     bool justDied = a.takeHit(10);
+
                     if (justDied) {
                         gameStats.setScore(gameStats.getScore() + 100);
-                        effects.addText("+100", a.x + a.w / 2, a.y, 180);
+
+                        effects.addText(
+                            "+100",
+                            a.x + a.w / 2,
+                            a.y,
+                            180
+                        );
                     }
+
                     bullets.erase(bullets.begin() + i);
                     bulletRemoved = true;
                     break;
                 }
             }
 
-            if (bulletRemoved) continue;
+            if (bulletRemoved)
+                continue;
 
             if (bullets[i].isOffScreen()) {
                 bullets.erase(bullets.begin() + i);
-            } else {
+            }
+            else {
                 i++;
             }
         }
 
-        // Check bullet collisions with enemies
-        enemyManager.checkBulletCollisions(bullets, gameStats, effects);
+        // Check player bullets against enemies
+        enemyManager.checkBulletCollisions(
+            bullets,
+            gameStats,
+            effects
+        );
+
+        // Enemy wave is finished when all enemies are dead, spawns the next wave
+        if (gameStats.getWaveNumber() % 3 == 0 && enemyManager.allEnemiesDefeated()) {
+            asteroidManager.startNextWave(gameStats);
+        }
+
+        // Update and render enemy bullets
+        for (int i = 0; i < enemyBullets.size();) {
+            enemyBullets[i].update();
+            enemyBullets[i].render(renderer);
+
+            bool bulletRemoved = false;
+
+            // Enemy bullet hits player
+            if (!paused && checkCollision(enemyBullets[i].rect, plane.rect)) {
+                paused = true;
+                pauseStart = SDL_GetTicks();
+
+                gameStats.setLives(gameStats.getLives() - 1);
+
+                effects.addText(
+                    "-1 LIFE",
+                    plane.x + plane.w / 2,
+                    plane.y - 20,
+                    200
+                );
+
+                enemyBullets.erase(enemyBullets.begin() + i);
+                bulletRemoved = true;
+            }
+
+            if (bulletRemoved)
+                continue;
+
+            if (enemyBullets[i].isOffScreen()) {
+                enemyBullets.erase(enemyBullets.begin() + i);
+            }
+            else {
+                i++;
+            }
+        }
 
         // Update effects
         effects.update();
@@ -378,12 +445,16 @@ if (state == TITLE) {
 
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
-
     }
 
     SDL_DestroyTexture(background);
+    SDL_DestroyTexture(enemySmallTexture);
+    SDL_DestroyTexture(enemyMediumTexture);
+    SDL_DestroyTexture(enemyLargeTexture);
+    TTF_CloseFont(font);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+
     IMG_Quit();
     TTF_Quit();
     SDL_Quit();
