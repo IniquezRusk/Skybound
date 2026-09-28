@@ -1,7 +1,8 @@
-// g++ main.cpp player.cpp asteroid.cpp bullet.cpp stats.cpp screeneffects.cpp utils.cpp asteroid_manager.cpp enemy.cpp enemy_manager.cpp-Ix86_64-w64-mingw32/include -Lx86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -o Skybound.exe
+// g++ main.cpp player.cpp asteroid.cpp bullet.cpp stats.cpp screeneffects.cpp utils.cpp asteroid_manager.cpp enemy.cpp enemy_manager.cpp -Ix86_64-w64-mingw32/include -Lx86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -o Skybound.exe
 
 #define SDL_MAIN_HANDLED
 #include <iostream>
+#include <string>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
@@ -23,14 +24,6 @@ enum GameState {
     PAUSED,
     GAME_OVER
 };
-
-// Function that checks for collisions, Axis-Aligned bounding box
-bool checkCollision(const SDL_Rect& a, const SDL_Rect& b) {
-    return (a.x < b.x + b.w &&
-            a.x + a.w > b.x &&
-            a.y < b.y + b.h &&
-            a.y + a.h > b.y);
-}
 
 int main() {
     SDL_Window* window = nullptr;
@@ -375,6 +368,9 @@ if (state == TITLE) {
                 i++;
             }
         }
+
+        // Check bullet collisions with enemies
+        enemyManager.checkBulletCollisions(bullets, gameStats, effects);
 
         // Update effects
         effects.update();

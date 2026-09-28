@@ -2,7 +2,11 @@
 
 #include <SDL2/SDL.h>
 #include <vector>
+
 #include "enemy.h"
+#include "stats.h"
+#include "screeneffects.h"
+#include "bullet.h"
 
 class EnemyManager
 {
@@ -15,8 +19,14 @@ class EnemyManager
         );
 
         void spawnWave(int wave);
-        void update();;
+        void update();
         void render();
+        bool allEnemiesDefeated();
+        void checkBulletCollisions(
+            std::vector<Bullet>& bullets, 
+            stats& playerStats,
+            ScreenEffects& effects
+        );
 
     private:
         SDL_Renderer* renderer;

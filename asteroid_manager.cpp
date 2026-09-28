@@ -18,6 +18,13 @@ void AsteroidManager::startNextWave(stats& playerStats) {
     currentWave++;
     asteroids.clear();
 
+    // Every 3rd wave is an enemy wave so we don't spawn the asteroids
+    if (currentWave % 3 == 0) {
+        playerStats.setWaveNumber(currentWave);
+        waitingForNextWave = false;
+        return;
+    }
+
     int numAsteroids = 5 + currentWave * 2;
     if (numAsteroids > 30) numAsteroids = 30;
 
@@ -56,7 +63,7 @@ asteroids.erase(
         asteroids.end());
 
     // When all are gone, prepare next wave
-    if (allAsteroidsDestroyed()) {
+    if (currentWave % 3 != 0 && allAsteroidsDestroyed()) {
         waitingForNextWave = true;
         waveTimer = SDL_GetTicks();
     }

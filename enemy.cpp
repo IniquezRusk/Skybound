@@ -69,6 +69,9 @@ void Enemy::update()
     // Smooth vertical hovering
     hoverTime += 0.016f;
 
+    // Move horizontally
+    x += speedX;
+
     y = baseY +
         sin(hoverTime * hoverSpeed + hoverPhase) * hoverAmplitude;
 

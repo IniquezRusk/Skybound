@@ -10,4 +10,6 @@ void renderText(SDL_Renderer* renderer,
                 TTF_Font* font,
                 SDL_Color color = {255, 255,255,255});
 
+bool checkCollision(const SDL_Rect& a, const SDL_Rect& b);
+
 #endif
