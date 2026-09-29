@@ -7,6 +7,7 @@
 #include "stats.h"
 #include "screeneffects.h"
 #include "bullet.h"
+#include "explosion.h"
 
 class EnemyManager
 {
@@ -25,7 +26,8 @@ class EnemyManager
         void checkBulletCollisions(
             std::vector<Bullet>& bullets, 
             stats& playerStats,
-            ScreenEffects& effects
+            ScreenEffects& effects,
+            std::vector<Explosion>& explosions
         );
         void reset();
 

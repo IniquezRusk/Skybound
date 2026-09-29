@@ -4,6 +4,7 @@
 #include "screeneffects.h"
 #include "stats.h"
 #include "enemy.h"
+#include "explosion.h"
 
 #include <cstdlib>
 
@@ -169,7 +170,8 @@ bool EnemyManager::allEnemiesDefeated()
     return true;
 }
 
-void EnemyManager::checkBulletCollisions(std::vector<Bullet>& bullets, stats& playerStats, ScreenEffects& effects)
+void EnemyManager::checkBulletCollisions(std::vector<Bullet>& bullets, 
+    stats& playerStats, ScreenEffects& effects, std::vector<Explosion>& explosions)
 {
     for (size_t i = 0; i < bullets.size();)
     {
@@ -189,8 +191,14 @@ void EnemyManager::checkBulletCollisions(std::vector<Bullet>& bullets, stats& pl
                     effects.addText(
                         "+100",
                         enemy.x + enemy.w / 2,
-                        enemy.y,
+                        enemy.y + enemy.h / 2,
                         180
+                    );
+
+                    explosions.emplace_back(
+                        enemy.x + enemy.w / 2,
+                        enemy.y + enemy.h / 2,
+                        enemy.w
                     );
                 }
 

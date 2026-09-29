@@ -1,8 +1,10 @@
-// g++ main.cpp player.cpp asteroid.cpp bullet.cpp stats.cpp screeneffects.cpp utils.cpp asteroid_manager.cpp enemy.cpp enemy_manager.cpp -Ix86_64-w64-mingw32/include -Lx86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -o Skybound.exe
+// g++ main.cpp player.cpp asteroid.cpp bullet.cpp stats.cpp screeneffects.cpp utils.cpp asteroid_manager.cpp enemy.cpp enemy_manager.cpp explosion.cpp -Ix86_64-w64-mingw32/include -Lx86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -o Skybound.exe
 
 #define SDL_MAIN_HANDLED
 #include <iostream>
 #include <string>
+#include <cstdlib>
+#include <algorithm>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
@@ -16,7 +18,7 @@
 #include "asteroid_manager.h"
 #include "enemy.h"
 #include "enemy_manager.h"
-#include <cstdlib>
+#include "explosion.h"
 
 enum GameState {
     TITLE,
@@ -109,6 +111,7 @@ int main() {
     // Declares enemies and bullets for player
     std::vector<Bullet> bullets;
     std::vector<Bullet> enemyBullets;
+    std::vector<Explosion> explosions;
 
     int previousWave = gameStats.getWaveNumber();
 
@@ -152,6 +155,7 @@ int main() {
                 // resets world
                 bullets.clear();
                 enemyBullets.clear();
+                explosions.clear();
                 asteroidManager.reset();
                 enemyManager.reset();
                 effects = ScreenEffects();
@@ -372,6 +376,12 @@ if (state == TITLE) {
                             a.y,
                             180
                         );
+
+                        explosions.emplace_back(
+                            a.x + a.w / 2,
+                            a.y + a.h / 2,
+                            a.w
+                        );
                     }
 
                     bullets.erase(bullets.begin() + i);
@@ -395,7 +405,8 @@ if (state == TITLE) {
         enemyManager.checkBulletCollisions(
             bullets,
             gameStats,
-            effects
+            effects,
+            explosions
         );
 
         // Enemy wave is finished when all enemies are dead, spawns the next wave
@@ -438,6 +449,24 @@ if (state == TITLE) {
                 i++;
             }
         }
+
+        // Update and render explosions
+        for (auto& explosion : explosions) {
+            explosion.update();
+            explosion.render(renderer);
+        }
+
+        explosions.erase(
+            std::remove_if(
+                explosions.begin(),
+                explosions.end(),
+                [](const Explosion& explosion)
+                {
+                    return explosion.isFinished();
+                }
+            ),
+            explosions.end()
+        );
 
         // Update effects
         effects.update();

@@ -1,4 +1,5 @@
 #include "enemy.h"
+#include "enemy_manager.h"
 #include "constant.h"
 #include <cstdlib>
 #include <cmath>
